@@ -40,7 +40,7 @@ pipeline {
                     scp -o StrictHostKeyChecking=no -r backend ${REMOTE_HOST}:/home/ubuntu/
                     ssh -o StrictHostKeyChecking=no ${REMOTE_HOST} '
                         cd ~/backend &&
-                        ./mvnw clean install &&
+                        mvn clean install &&
                         docker build -t priacc-backend . &&
                         docker rm -f priacc-backend || true &&
                         docker run -d --name priacc-backend -p 8080:8080 priacc-backend
