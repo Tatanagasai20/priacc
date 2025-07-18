@@ -1,6 +1,9 @@
+FROM maven:3.9.6-eclipse-temurin-17
 
-FROM openjdk:17
 WORKDIR /app
+
 COPY . .
-RUN ./mvnw clean install -DskipTests || mvn clean install -DskipTests
-CMD ["java", "-jar", "target/backend-1.0.jar"]
+
+RUN mvn clean install -DskipTests
+
+CMD ["java", "-jar", "target/backend-0.0.1-SNAPSHOT.jar"]
