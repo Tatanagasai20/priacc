@@ -2,30 +2,30 @@ pipeline {
     agent any
 
     environment {
-        REMOTE_HOST = "ubuntu@65.0.169.165"  // Docker instance public IP
-        CREDENTIALS_ID = 'test'              // Jenkins SSH credential ID
-        FRONTEND_DIR = 'frontend'
-        BACKEND_DIR = 'backend'
+        GIT_REPO = 'https://github.com/Tatanagasai20/priacc.git'
+        BRANCH = 'main'  // Make sure this branch exists
+        REMOTE_HOST = 'ubuntu@65.0.169.165'
+        CREDENTIALS_ID = 'ubuntu'
     }
 
     stages {
-        stage('Clone') {
+        stage('Clone Repository') {
             steps {
-                git 'https://github.com/Tatanagasai20/priacc.git'
+                git branch: "${BRANCH}", url: "${GIT_REPO}"
             }
         }
 
         stage('Build & Deploy Frontend') {
             steps {
-                sshagent([CREDENTIALS_ID]) {
+                sshagent(credentials: ["${CREDENTIALS_ID}"]) {
                     sh """
-                    ssh-keyscan -H 65.0.169.165 >> ~/.ssh/known_hosts
-                    scp -r $FRONTEND_DIR $REMOTE_HOST:/home/ubuntu/
-                    ssh $REMOTE_HOST '
-                        cd /home/ubuntu/$FRONTEND_DIR &&
-                        docker build -t frontend-app . &&
-                        docker rm -f frontend-app || true &&
-                        docker run -d --name frontend-app -p 3000:3000 frontend-app
+                    ssh -o StrictHostKeyChecking=no ${REMOTE_HOST} "rm -rf ~/frontend"
+                    scp -o StrictHostKeyChecking=no -r frontend ${REMOTE_HOST}:/home/ubuntu/
+                    ssh -o StrictHostKeyChecking=no ${REMOTE_HOST} '
+                        cd ~/frontend &&
+                        docker build -t priacc-frontend . &&
+                        docker rm -f priacc-frontend || true &&
+                        docker run -d --name priacc-frontend -p 3000:3000 priacc-frontend
                     '
                     """
                 }
@@ -34,15 +34,16 @@ pipeline {
 
         stage('Build & Deploy Backend') {
             steps {
-                sshagent([CREDENTIALS_ID]) {
+                sshagent(credentials: ["${CREDENTIALS_ID}"]) {
                     sh """
-                    ssh-keyscan -H 65.0.169.165 >> ~/.ssh/known_hosts
-                    scp -r $BACKEND_DIR $REMOTE_HOST:/home/ubuntu/
-                    ssh $REMOTE_HOST '
-                        cd /home/ubuntu/$BACKEND_DIR &&
-                        docker build -t backend-app . &&
-                        docker rm -f backend-app || true &&
-                        docker run -d --name backend-app -p 8080:8080 backend-app
+                    ssh -o StrictHostKeyChecking=no ${REMOTE_HOST} "rm -rf ~/backend"
+                    scp -o StrictHostKeyChecking=no -r backend ${REMOTE_HOST}:/home/ubuntu/
+                    ssh -o StrictHostKeyChecking=no ${REMOTE_HOST} '
+                        cd ~/backend &&
+                        ./mvnw clean install &&
+                        docker build -t priacc-backend . &&
+                        docker rm -f priacc-backend || true &&
+                        docker run -d --name priacc-backend -p 8080:8080 priacc-backend
                     '
                     """
                 }
