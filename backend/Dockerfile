@@ -1,10 +1,5 @@
-# backend/Dockerfile
-FROM maven:3.9.6-eclipse-temurin-17
-
+FROM openjdk:17-jdk-slim
 WORKDIR /app
+COPY target/backend-1.0.jar app.jar
+CMD ["java", "-jar", "app.jar"]
 
-COPY . .
-
-RUN mvn clean install -DskipTests
-
-CMD ["java", "-jar", "target/backend-0.0.1-SNAPSHOT.jar"]
