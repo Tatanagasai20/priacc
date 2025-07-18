@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        REMOTE_HOST = "ubuntu@65.0.169.165"
-        CREDENTIALS_ID = 'test'
+        REMOTE_HOST = "ubuntu@65.0.169.165"  // Docker instance public IP
+        CREDENTIALS_ID = 'test'              // Jenkins SSH credential ID
         FRONTEND_DIR = 'frontend'
         BACKEND_DIR = 'backend'
     }
@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('Clone') {
             steps {
-                git branch: 'main', url: 'https://github.com/Tatanagasai20/priacc.git'
+                git 'https://github.com/Tatanagasai20/priacc.git'
             }
         }
 
@@ -19,12 +19,13 @@ pipeline {
             steps {
                 sshagent([CREDENTIALS_ID]) {
                     sh """
+                    ssh-keyscan -H 65.0.169.165 >> ~/.ssh/known_hosts
                     scp -r $FRONTEND_DIR $REMOTE_HOST:/home/ubuntu/
                     ssh $REMOTE_HOST '
                         cd /home/ubuntu/$FRONTEND_DIR &&
-                        docker rm -f frontend-container || true &&
                         docker build -t frontend-app . &&
-                        docker run -d --name frontend-container -p 3000:3000 frontend-app
+                        docker rm -f frontend-app || true &&
+                        docker run -d --name frontend-app -p 3000:3000 frontend-app
                     '
                     """
                 }
@@ -35,12 +36,13 @@ pipeline {
             steps {
                 sshagent([CREDENTIALS_ID]) {
                     sh """
+                    ssh-keyscan -H 65.0.169.165 >> ~/.ssh/known_hosts
                     scp -r $BACKEND_DIR $REMOTE_HOST:/home/ubuntu/
                     ssh $REMOTE_HOST '
                         cd /home/ubuntu/$BACKEND_DIR &&
-                        docker rm -f backend-container || true &&
                         docker build -t backend-app . &&
-                        docker run -d --name backend-container -p 8080:8080 backend-app
+                        docker rm -f backend-app || true &&
+                        docker run -d --name backend-app -p 8080:8080 backend-app
                     '
                     """
                 }
