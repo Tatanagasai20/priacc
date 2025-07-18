@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        REMOTE_HOST = "ubuntu@65.0.169.165"  // Replace with Docker server IP
+        REMOTE_HOST = "ubuntu@65.0.169.165"
         CREDENTIALS_ID = 'test'
         FRONTEND_DIR = 'frontend'
         BACKEND_DIR = 'backend'
@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('Clone') {
             steps {
-                git 'https://github.com/Tatanagasai20/priacc.git'
+                git branch: 'main', url: 'https://github.com/Tatanagasai20/priacc.git'
             }
         }
 
@@ -20,7 +20,12 @@ pipeline {
                 sshagent([CREDENTIALS_ID]) {
                     sh """
                     scp -r $FRONTEND_DIR $REMOTE_HOST:/home/ubuntu/
-                    ssh $REMOTE_HOST 'cd /home/ubuntu/$FRONTEND_DIR && docker build -t frontend-app . && docker run -d -p 3000:3000 frontend-app'
+                    ssh $REMOTE_HOST '
+                        cd /home/ubuntu/$FRONTEND_DIR &&
+                        docker rm -f frontend-container || true &&
+                        docker build -t frontend-app . &&
+                        docker run -d --name frontend-container -p 3000:3000 frontend-app
+                    '
                     """
                 }
             }
@@ -31,11 +36,15 @@ pipeline {
                 sshagent([CREDENTIALS_ID]) {
                     sh """
                     scp -r $BACKEND_DIR $REMOTE_HOST:/home/ubuntu/
-                    ssh $REMOTE_HOST 'cd /home/ubuntu/$BACKEND_DIR && docker build -t backend-app . && docker run -d -p 8080:8080 backend-app'
+                    ssh $REMOTE_HOST '
+                        cd /home/ubuntu/$BACKEND_DIR &&
+                        docker rm -f backend-container || true &&
+                        docker build -t backend-app . &&
+                        docker run -d --name backend-container -p 8080:8080 backend-app
+                    '
                     """
                 }
             }
         }
     }
 }
-
