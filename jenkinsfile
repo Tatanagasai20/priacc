@@ -5,7 +5,7 @@ pipeline {
         GIT_REPO = 'https://github.com/Tatanagasai20/priacc.git'
         BRANCH = 'main'  // Make sure this branch exists
         REMOTE_HOST = 'ubuntu@65.0.169.165'
-        CREDENTIALS_ID = 'ubuntu'
+        CREDENTIALS_ID = 'test'
     }
 
     stages {
